@@ -13,7 +13,6 @@ import type {
 import { validateSlackToken } from '../utils/auth.js';
 import {
   dateToTimestamp,
-  isWithinDateRange,
   containsKeywords,
   matchesUser,
   matchesMediaFilter
@@ -108,14 +107,20 @@ export class SlackScraper {
       params.channel
     );
 
-    // Get workspace info
-    const teamInfo = await this.client.team.info();
-    const workspace = teamInfo.team?.name || 'Unknown';
+    // Get workspace info (optional - requires team:read scope)
+    let workspace = 'Unknown';
+    try {
+      const teamInfo = await this.client.team.info();
+      workspace = teamInfo.team?.name || 'Unknown';
+    } catch (error) {
+      // team:read scope not available, use default
+      workspace = 'Unknown';
+    }
 
-    // Convert date filters to timestamps
-    const oldest = params.minDate ? dateToTimestamp(params.minDate) : undefined;
+    // Convert date filters to timestamps (Slack API expects string timestamps)
+    const oldest = params.minDate ? String(dateToTimestamp(params.minDate)) : undefined;
     const latest = params.maxDate
-      ? dateToTimestamp(params.maxDate) + 86400
+      ? String(dateToTimestamp(params.maxDate) + 86400)
       : undefined; // Add 1 day to make inclusive
 
     // Fetch messages

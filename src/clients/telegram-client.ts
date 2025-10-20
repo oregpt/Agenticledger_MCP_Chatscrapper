@@ -256,7 +256,7 @@ export class TelegramScraper {
           type: entity.broadcast ? 'channel' : 'group',
           participants: entity.participantsCount || undefined,
           isPublic: !entity.megagroup,
-          description: entity.about || undefined
+          description: undefined // Channel description requires separate API call
         });
       } else if (entity instanceof Api.Chat) {
         channels.push({
